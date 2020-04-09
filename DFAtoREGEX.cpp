@@ -11,6 +11,7 @@ using namespace std;
 
 ifstream f("dfa.txt");
 ofstream g("regex.txt");
+
 /*
 number of states
 states (Q)
@@ -22,7 +23,6 @@ initial state (q0)
 number of final states
 final states (F)
 */
-
 
 int findMax(set<int> my_set)
 {
@@ -166,7 +166,7 @@ void modifyFinalState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sig
 		nrFinalStates = 1;
 	}
 }
-//--------------------------------------
+
 string isTransition(int a, int b, map<pair<int, string>, int>& delta) {
 
 	map<pair<int, string>, int>::iterator it = delta.begin();
@@ -176,32 +176,8 @@ string isTransition(int a, int b, map<pair<int, string>, int>& delta) {
 		it++;
 	}
 	return "";
-	//aici apelez cleanup
-
 }
 
-//bool stringInTransition(string a, map<pair<int, string>, int>& delta) {
-//	map<pair<int, string>, int>::iterator it = delta.begin();
-//	while (it != delta.end()) {
-//		if (it->first.second == a) return 1;
-//		it++;
-//	}
-//	return 0;
-//}
-//
-//string cleanup(string &raw, map<pair<int, string>, int>& delta) {
-//	int	nr = 0;
-//	for (char c : raw) {
-//		//inlocuim punct cu lambda
-//		if (c != '.' && stringInTransition(raw, delta)){
-//
-//			raw.replace(nr, 1, "lambda");
-//
-//		}
-//		nr++;
-//	}
-//}
-//----------------------------------------------------
 void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<pair<int, string>, int>& delta) {
 	string expresie;
 	set<int> in, out;
@@ -226,17 +202,23 @@ void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<
 			if (isTransition(intrare, iesire, delta) != "") {
 				string expresie = isTransition(intrare, iesire, delta);
 				if (isTransition(stare, stare, delta) != "") {
-					expresie += " + (" + isTransition(intrare, stare, delta) + ") ( . +" + isTransition(stare, stare, delta) + ")* (" + isTransition(stare, iesire, delta) + ")";
+					string a = isTransition(intrare, stare, delta);
+					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
+					string b = isTransition(stare, stare, delta);
+					//if (b[0] == '(' && b[b.length() - 1] == ')') b = b.substr(1, b.length() - 2);
+					string c = isTransition(stare, iesire, delta);
+					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
+					expresie += "+(" + a + ")(" + b + ")*(" + c + ")";
+
 				}
 				else {
-					expresie += " + (" + isTransition(intrare, stare, delta) + ") ( . )* (" + isTransition(stare, iesire, delta) + ")";
+					string a = isTransition(intrare, stare, delta);
+					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
+					string c = isTransition(stare, iesire, delta);
+					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
+					expresie += "+(" + a + ").(" + c + ")";
+					
 				}
-				//int	nr = 0;
-				//for (char c : expresie) {
-				//	//inlocuim punct cu lambda
-				//	if (c == '.') expresie.replace(nr, 1, "lambda");
-				//	nr++;
-				//}
 				for (map<pair<int, string>, int>::iterator it2 = delta.begin(); it2 != delta.end();) {
 					if (it2->first.first == intrare && it2->second == iesire)
 					{
@@ -252,17 +234,21 @@ void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<
 			else {
 				string expresie;
 				if (isTransition(stare, stare, delta) != "") {
-					expresie = "(" + isTransition(intrare, stare, delta) + ") ( . +" + isTransition(stare, stare, delta) + ")* (" + isTransition(stare, iesire, delta) + ")";
+					string a = isTransition(intrare, stare, delta);
+					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
+					string b = isTransition(stare, stare, delta);
+					//if (b[0] == '(' && b[b.length() - 1] == ')') b = b.substr(1, b.length() - 2);
+					string c = isTransition(stare, iesire, delta);
+					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
+					expresie = "(" + a + ")(" + b + ")*(" + c + ")";
 				}
 				else {
-					expresie = "(" + isTransition(intrare, stare, delta) + ") ( . )* (" + isTransition(stare, iesire, delta) + ")";
+					string a = isTransition(intrare, stare, delta);
+					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
+					string c = isTransition(stare, iesire, delta);
+					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
+					expresie = "(" + a + ").(" + c + ")";
 				}
-				//int	nr = 0;
-				//for (char c : expresie) {
-				//	//inlocuim punct cu lambda
-				//	if (c == '.') expresie.replace(nr, 1, "lambda");
-				//	nr++;
-				//}
 				delta[{intrare, expresie}] = iesire;
 				nrTransitions++;
 			}
@@ -296,6 +282,16 @@ void removeStates(int& nrStates, set<int>& Q, int& nrTransitions, map<pair<int, 
 	}
 }
 
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+	if (from.empty())
+		return;
+	size_t start_pos = 0;
+	while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+		str.replace(start_pos, from.length(), to);
+		start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+	}
+}
+
 void DFAtoREGEX(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, int& nrTransitions, map<pair<int, string>, int>& delta, int& q0, int& nrFinalStates, set<int>& F) {
 	modifyInitialState(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, q0);
 
@@ -305,7 +301,11 @@ void DFAtoREGEX(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, in
 
 	removeStates(nrStates, Q, nrTransitions, delta);
 
-	g << delta.begin()->first.second;
+	string final = delta.begin()->first.second;
+
+	//replaceAll(final, ".", "lambda");
+
+	g << final;
 }
 
 int main()
