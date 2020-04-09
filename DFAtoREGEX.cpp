@@ -10,7 +10,7 @@
 using namespace std;
 
 ifstream f("dfa.txt");
-
+ofstream g("regex.txt");
 /*
 number of states
 states (Q)
@@ -83,29 +83,29 @@ void readDFA(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, int& 
 }
 
 void printDFA(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, int& nrTransitions, map<pair<int, string>, int>& delta, int& q0, int& nrFinalStates, set<int>& F) {
-	cout << nrStates << endl;
+	g << nrStates << endl;
 	for (int stare : Q)
-		cout << stare << " ";
-	cout << endl;
-	cout << nrLetters << endl;
+		g << stare << " ";
+	g << endl;
+	g << nrLetters << endl;
 	for (char litera : Sigma)
-		cout << litera << " ";
-	cout << endl;
-	cout << nrTransitions << endl;
+		g << litera << " ";
+	g << endl;
+	g << nrTransitions << endl;
 	map<pair<int, string>, int>::iterator it = delta.begin();
 	while (it != delta.end()) {
 		pair<int, string> cheie = it->first;
 		int stare1 = cheie.first;
 		string litera = cheie.second;
 		int stare2 = it->second;
-		cout << stare1 << " " << litera << " " << stare2 << endl;
+		g << stare1 << " " << litera << " " << stare2 << endl;
 		it++;
 	}
-	cout << q0 << endl;
-	cout << nrFinalStates << endl;
+	g << q0 << endl;
+	g << nrFinalStates << endl;
 	for (int final : F)
-		cout << final << " ";
-	cout << endl;
+		g << final << " ";
+	g << endl;
 }
 
 void modifyInitialState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, int& nrTransitions, map<pair<int, string>, int>& delta, int& q0) {
@@ -121,12 +121,12 @@ void modifyInitialState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& S
 		if (stare2 == q0) {
 			int minim = findMin(Q);
 			Q.insert(minim - 1);
-			delta[{-1, "."}] = q0;
+			delta[{minim - 1, "."}] = q0;
 			Sigma.insert('.');
 			nrTransitions++;
 			nrStates++;
 			nrLetters++;
-			q0 = -1;
+			q0 = minim - 1;
 			break;
 		}
 		it++;
@@ -166,7 +166,7 @@ void modifyFinalState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sig
 		nrFinalStates = 1;
 	}
 }
-
+//--------------------------------------
 string isTransition(int a, int b, map<pair<int, string>, int>& delta) {
 
 	map<pair<int, string>, int>::iterator it = delta.begin();
@@ -176,9 +176,32 @@ string isTransition(int a, int b, map<pair<int, string>, int>& delta) {
 		it++;
 	}
 	return "";
+	//aici apelez cleanup
+
 }
 
-
+//bool stringInTransition(string a, map<pair<int, string>, int>& delta) {
+//	map<pair<int, string>, int>::iterator it = delta.begin();
+//	while (it != delta.end()) {
+//		if (it->first.second == a) return 1;
+//		it++;
+//	}
+//	return 0;
+//}
+//
+//string cleanup(string &raw, map<pair<int, string>, int>& delta) {
+//	int	nr = 0;
+//	for (char c : raw) {
+//		//inlocuim punct cu lambda
+//		if (c != '.' && stringInTransition(raw, delta)){
+//
+//			raw.replace(nr, 1, "lambda");
+//
+//		}
+//		nr++;
+//	}
+//}
+//----------------------------------------------------
 void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<pair<int, string>, int>& delta) {
 	string expresie;
 	set<int> in, out;
@@ -202,13 +225,18 @@ void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<
 			*/
 			if (isTransition(intrare, iesire, delta) != "") {
 				string expresie = isTransition(intrare, iesire, delta);
-				expresie += " + (" + isTransition(intrare, stare, delta) + ") ( . +" + isTransition(stare, stare, delta) + ")* (" + isTransition(stare, iesire, delta) + ")";
-				int	nr = 0;
-				for (char c : expresie) {
-					//inlocuim punct cu lambda
-					if (c == '.') expresie.replace(nr, 1, "lambda");
-					nr++;
+				if (isTransition(stare, stare, delta) != "") {
+					expresie += " + (" + isTransition(intrare, stare, delta) + ") ( . +" + isTransition(stare, stare, delta) + ")* (" + isTransition(stare, iesire, delta) + ")";
 				}
+				else {
+					expresie += " + (" + isTransition(intrare, stare, delta) + ") ( . )* (" + isTransition(stare, iesire, delta) + ")";
+				}
+				//int	nr = 0;
+				//for (char c : expresie) {
+				//	//inlocuim punct cu lambda
+				//	if (c == '.') expresie.replace(nr, 1, "lambda");
+				//	nr++;
+				//}
 				for (map<pair<int, string>, int>::iterator it2 = delta.begin(); it2 != delta.end();) {
 					if (it2->first.first == intrare && it2->second == iesire)
 					{
@@ -218,31 +246,36 @@ void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<
 					}
 					else it2++;
 				}
-
 				delta[{intrare, expresie}] = iesire;
+				nrTransitions++;
 			}
 			else {
-				string expresie = "(" + isTransition(intrare, stare, delta) + ") ( . +" + isTransition(stare, stare, delta) + ")* (" + isTransition(stare, iesire, delta) + ")";
-				int	nr = 0;
-				for (char c : expresie) {
-					//inlocuim punct cu lambda
-					if (c == '.') expresie.replace(nr, 1, "lambda");
-					nr++;
+				string expresie;
+				if (isTransition(stare, stare, delta) != "") {
+					expresie = "(" + isTransition(intrare, stare, delta) + ") ( . +" + isTransition(stare, stare, delta) + ")* (" + isTransition(stare, iesire, delta) + ")";
 				}
+				else {
+					expresie = "(" + isTransition(intrare, stare, delta) + ") ( . )* (" + isTransition(stare, iesire, delta) + ")";
+				}
+				//int	nr = 0;
+				//for (char c : expresie) {
+				//	//inlocuim punct cu lambda
+				//	if (c == '.') expresie.replace(nr, 1, "lambda");
+				//	nr++;
+				//}
 				delta[{intrare, expresie}] = iesire;
-
+				nrTransitions++;
 			}
-			for (map<pair<int, string>, int>::iterator it2 = delta.begin(); it2 != delta.end();) {
-				if (it2->first.first == stare || it2->second == stare)
-				{
-					//stergem toate tranzitiile care contin starea
-					it2 = delta.erase(it2);
-					nrTransitions--;
-				}
-				else it2++;
-			}
-			nrStates--;
 		}
+	}
+	for (map<pair<int, string>, int>::iterator it2 = delta.begin(); it2 != delta.end();) {
+		if (it2->first.first == stare || it2->second == stare)
+		{
+			//stergem toate tranzitiile care contin starea
+			it2 = delta.erase(it2);
+			nrTransitions--;
+		}
+		else it2++;
 	}
 }
 
@@ -250,9 +283,29 @@ void removeStates(int& nrStates, set<int>& Q, int& nrTransitions, map<pair<int, 
 	int initial = findMin(Q);
 	int final = findMax(Q);
 	for (int i : Q) {
-		if (i != initial && i != final) removeState(i, nrStates, Q, nrTransitions, delta);
+		if (i > initial && i < final) removeState(i, nrStates, Q, nrTransitions, delta);
 	}
-	cout << delta.begin()->first.second;
+	for (auto it = Q.begin(); it != Q.end(); ) {
+		if (*it > initial && *it < final) {
+			Q.erase(it++);
+			nrStates--;
+		}
+		else {
+			++it;
+		}
+	}
+}
+
+void DFAtoREGEX(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, int& nrTransitions, map<pair<int, string>, int>& delta, int& q0, int& nrFinalStates, set<int>& F) {
+	modifyInitialState(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, q0);
+
+	modifyFinalState(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, nrFinalStates, F);
+
+	g << "Regular expression:" << endl;
+
+	removeStates(nrStates, Q, nrTransitions, delta);
+
+	g << delta.begin()->first.second;
 }
 
 int main()
@@ -276,15 +329,7 @@ int main()
 
 	readDFA(noOfStates, Q, noOfLetters, Sigma, noOfTransitions, delta, q0, noOfFinalStates, F);
 
-	modifyInitialState(noOfStates, Q, noOfLetters, Sigma, noOfTransitions, delta, q0);
-
-	modifyFinalState(noOfStates, Q, noOfLetters, Sigma, noOfTransitions, delta, noOfFinalStates, F);
-
-	printDFA(noOfStates, Q, noOfLetters, Sigma, noOfTransitions, delta, q0, noOfFinalStates, F);
-
-	cout << "-------------------------------------" << endl;
-
-	removeStates(noOfStates, Q, noOfTransitions, delta);
+	DFAtoREGEX(noOfStates, Q, noOfLetters, Sigma, noOfTransitions, delta, q0, noOfFinalStates, F);
 
 	return 0;
 }
