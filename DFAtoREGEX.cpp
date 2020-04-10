@@ -149,7 +149,7 @@ void modifyFinalState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sig
 
 	// daca sunt mai multe stari finale sau exista tranzitii catre o stare finala, 
 	// facem o noua stare si o legam de vechile stari finale prin lambda tranzitii
-	if (nrFinalStates > 1 && nuexista == 0) {
+	if (nrFinalStates > 1 || nuexista == 0) {
 		nrStates++;
 		int maxim = findMax(Q);
 		Q.insert(maxim + 1);
@@ -200,25 +200,33 @@ void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<
 			etichetei buclei de la qk la qk, sau λ dacă bucla nu există) concatenată cu(eticheta de la qk la qj)].
 			*/
 			if (isTransition(intrare, iesire, delta) != "") {
-				string expresie = isTransition(intrare, iesire, delta);
-				if (isTransition(stare, stare, delta) != "") {
-					string a = isTransition(intrare, stare, delta);
-					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
-					string b = isTransition(stare, stare, delta);
-					//if (b[0] == '(' && b[b.length() - 1] == ')') b = b.substr(1, b.length() - 2);
-					string c = isTransition(stare, iesire, delta);
-					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
-					expresie += "+(" + a + ")(" + b + ")*(" + c + ")";
-
-				}
+				string expresie = "(" + isTransition(intrare, iesire, delta) + "+";
+				string a = isTransition(intrare, stare, delta);
+				string b = isTransition(stare, stare, delta);
+				string c = isTransition(stare, iesire, delta);
+				if (a == ".")
+					if (b == "" && c == ".")
+						expresie += a;
+					else {
+						if (b != "") {
+							if (b.length() == 1) b += "*";
+							else b = "(" + b + ")*";
+							expresie += b;
+							if (c != ".") expresie += c;
+						}
+						else expresie += c;
+					}
 				else {
-					string a = isTransition(intrare, stare, delta);
-					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
-					string c = isTransition(stare, iesire, delta);
-					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
-					expresie += "+(" + a + ").(" + c + ")";
-					
+					expresie += a;
+					if (b != "") {
+						if (b.length() == 1) b += "*";
+						else b = "(" + b + ")*";
+						expresie += b;
+					}
+					if (c != ".") expresie += c;
 				}
+				expresie += ")";
+
 				for (map<pair<int, string>, int>::iterator it2 = delta.begin(); it2 != delta.end();) {
 					if (it2->first.first == intrare && it2->second == iesire)
 					{
@@ -232,22 +240,30 @@ void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<
 				nrTransitions++;
 			}
 			else {
-				string expresie;
-				if (isTransition(stare, stare, delta) != "") {
-					string a = isTransition(intrare, stare, delta);
-					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
-					string b = isTransition(stare, stare, delta);
-					//if (b[0] == '(' && b[b.length() - 1] == ')') b = b.substr(1, b.length() - 2);
-					string c = isTransition(stare, iesire, delta);
-					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
-					expresie = "(" + a + ")(" + b + ")*(" + c + ")";
+				string a = isTransition(intrare, stare, delta);
+				string b = isTransition(stare, stare, delta);
+				string c = isTransition(stare, iesire, delta);
+				if (a == ".") {
+					if (b == "" && c == ".") expresie = a;
+					else {
+						if (b != "") {
+							if (b.length() == 1) b += "*";
+							else b = "(" + b + ")*";
+							expresie = b;
+							if (c != ".") expresie += c;
+						}
+						else
+							expresie = c;
+					}
 				}
 				else {
-					string a = isTransition(intrare, stare, delta);
-					//if (a[0] == '(' && a[a.length() - 1] == ')') a = a.substr(1, a.length() - 2);
-					string c = isTransition(stare, iesire, delta);
-					//if (c[0] == '(' && c[c.length() - 1] == ')') c = c.substr(1, c.length() - 2);
-					expresie = "(" + a + ").(" + c + ")";
+					expresie = a;
+					if (b != "") {
+						if (b.length() == 1) b += "*";
+						else b = "(" + b + ")*";
+						expresie += b;
+					}
+					if (c != ".") expresie += c;
 				}
 				delta[{intrare, expresie}] = iesire;
 				nrTransitions++;
@@ -293,9 +309,12 @@ void replaceAll(std::string& str, const std::string& from, const std::string& to
 }
 
 void DFAtoREGEX(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, int& nrTransitions, map<pair<int, string>, int>& delta, int& q0, int& nrFinalStates, set<int>& F) {
+	
 	modifyInitialState(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, q0);
 
 	modifyFinalState(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, nrFinalStates, F);
+
+	//printDFA(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, q0, nrFinalStates, F);
 
 	g << "Regular expression:" << endl;
 

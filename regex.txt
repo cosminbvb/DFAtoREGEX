@@ -1,2 +1,2 @@
 Regular expression:
-((.).(a)).(.)+((.).(b))((a).(b))*(.+((a).(a)).(.))
+(b+ab*a)(((b+ab)+aab*a))*
