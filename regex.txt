@@ -1,2 +1,2 @@
 Regular expression:
-(a+b(ab)*(lambda+aa))
+(a*+a*b(a+b)*)

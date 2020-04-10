@@ -170,12 +170,14 @@ void modifyFinalState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sig
 string isTransition(int a, int b, map<pair<int, string>, int>& delta) {
 
 	map<pair<int, string>, int>::iterator it = delta.begin();
+	string temp="";
 	while (it != delta.end()) {
 		if (it->first.first == a && it->second == b)
-			return it->first.second;
+			if (temp == "") temp = it->first.second;
+			else temp += "+" + it->first.second;
 		it++;
 	}
-	return "";
+	return temp;
 }
 
 void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<pair<int, string>, int>& delta) {
