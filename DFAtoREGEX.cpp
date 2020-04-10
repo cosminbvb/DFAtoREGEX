@@ -314,15 +314,13 @@ void DFAtoREGEX(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, in
 
 	modifyFinalState(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, nrFinalStates, F);
 
-	//printDFA(nrStates, Q, nrLetters, Sigma, nrTransitions, delta, q0, nrFinalStates, F);
-
 	g << "Regular expression:" << endl;
 
 	removeStates(nrStates, Q, nrTransitions, delta);
 
 	string final = delta.begin()->first.second;
 
-	//replaceAll(final, ".", "lambda");
+	replaceAll(final, ".", "lambda");
 
 	g << final;
 }
@@ -330,7 +328,7 @@ void DFAtoREGEX(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, in
 int main()
 {
 	// M = (Q,Σ,δ,q0,F)
-	// the symbol for lambda is .
+	// !!!!!! the symbol for lambda is . 
 
 #pragma region declars
 
