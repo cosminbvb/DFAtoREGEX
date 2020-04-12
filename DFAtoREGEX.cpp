@@ -112,6 +112,9 @@ void modifyInitialState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& S
 
 	//daca exista tranzitii care intra in starea initiala, se adauga o noua stare
 	//initiala qi si o lambda-tranzitie de la qi la vechea stare initiala
+
+	//if there is any transition that ends in q0 (the given initial state), we make another state which becomes
+	//the new initial state and we add the transition delta(old q0, lambda) = new q0
 	map<pair<int, string>, int>::iterator it = delta.begin();
 	while (it != delta.end()) {
 		pair<int, string> cheie = it->first;
@@ -135,7 +138,8 @@ void modifyInitialState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& S
 
 void modifyFinalState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, int& nrTransitions, map<pair<int, string>, int>& delta, int& nrFinalStates, set<int>& F) {
 
-	// cautam daca exista vreo tranzitie catre vreo stare finala
+	// verificam daca exista vreo tranzitie care pleaca dintr-o stare finala
+	// verifying if there is any transition starting from any final state
 	int nuexista = 1; // presupunem ca nu exsita
 	map<pair<int, string>, int>::iterator it = delta.begin();
 	while (it != delta.end()) {
@@ -147,8 +151,13 @@ void modifyFinalState(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sig
 		it++;
 	}
 
-	// daca sunt mai multe stari finale sau exista tranzitii catre o stare finala, 
-	// facem o noua stare si o legam de vechile stari finale prin lambda tranzitii
+	// daca sunt mai multe stari finale sau exista tranzitii care pleaca dintr-o 
+	// stare finala, facem o noua stare si o legam de vechile stari finale prin 
+	// lambda tranzitii
+
+	// if we have more than one final state or we have any transition starting from 
+	// a final state, we make a new final state and add lambda-transitions from each
+	// old final state to the new one
 	if (nrFinalStates > 1 || nuexista == 0) {
 		nrStates++;
 		int maxim = findMax(Q);
@@ -284,6 +293,7 @@ void removeState(int stare, int& nrStates, set<int>& Q, int& nrTransitions, map<
 }
 
 void removeStates(int& nrStates, set<int>& Q, int& nrTransitions, map<pair<int, string>, int>& delta) {
+	//removing each state except from the initial and final 
 	int initial = findMin(Q);
 	int final = findMax(Q);
 	for (int i : Q) {
@@ -306,7 +316,7 @@ void replaceAll(std::string& str, const std::string& from, const std::string& to
 	size_t start_pos = 0;
 	while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
 		str.replace(start_pos, from.length(), to);
-		start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+		start_pos += to.length();
 	}
 }
 
@@ -330,7 +340,7 @@ void DFAtoREGEX(int& nrStates, set<int>& Q, int& nrLetters, set<char>& Sigma, in
 int main()
 {
 	// M = (Q,Σ,δ,q0,F)
-	// !!!!!! the symbol for lambda is . 
+	// ! the symbol for lambda is . 
 
 #pragma region declars
 
